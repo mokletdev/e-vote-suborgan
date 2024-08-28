@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  student
+  admin
+}
+
+model Suborgan {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  logo         String
+  User         User[]
+  Candidates   Candidates[]
+  Vote_Session Vote_Session[]
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  email               String                @unique
+  password            String?
+  name                String
+  role                UserRole
+  angkatan            String?
+  suborgan_id         String?
+  suborgan            Suborgan?             @relation(fields: [suborgan_id], references: [id])
+  User_Vote           User_Vote[]
+  Vote_Session_Access Vote_Session_Access[]
+}
+
+model Candidates {
+  id                     String                   @id @default(uuid())
+  img                    String
+  name                   String
+  kelas                  String
+  visi                   String                   @db.Text
+  misi                   String                   @db.Text
+  motto                  String                   @db.Text
+  progja                 String                   @db.Text
+  video_profil           String
+  suborgan_id            String
+  suborgan               Suborgan                 @relation(fields: [suborgan_id], references: [id])
+  Vote_Session_Candidate Vote_Session_Candidate[]
+  User_Vote              User_Vote[]
+  Pengalaman             Pengalaman[]
+}
+
+model Pengalaman {
+  id           String     @id @default(uuid())
+  description  String
+  candidate_id String
+  canditates   Candidates @relation(fields: [candidate_id], references: [id])
+}
+
+model Vote_Session {
+  id                     String                   @id @default(uuid())
+  title                  String
+  openedAt               DateTime
+  closedAt               DateTime
+  isPublic               Boolean                  @default(false)
+  max_vote               Int
+  suborgan_id            String
+  suborgan               Suborgan                 @relation(fields: [suborgan_id], references: [id])
+  Vote_Session_Candidate Vote_Session_Candidate[]
+  User_Vote              User_Vote[]
+  Vote_Session_Access    Vote_Session_Access[]
+}
+
+model Vote_Session_Candidate {
+  id              String       @id @default(uuid())
+  vote_session_id String
+  candidate_id    String
+  number          Int
+  vote_session    Vote_Session @relation(fields: [vote_session_id], references: [id])
+  candidate       Candidates   @relation(fields: [candidate_id], references: [id])
+}
+
+model Vote_Session_Access {
+  id              String       @id @default(uuid())
+  vote_session_id String
+  user_id         String
+  vote_session    Vote_Session @relation(fields: [vote_session_id], references: [id])
+  user            User         @relation(fields: [user_id], references: [id])
+}
+
+model User_Vote {
+  id              String       @id @default(uuid())
+  vote_session_id String
+  user_id         String
+  candidate_id    String
+  vote_session    Vote_Session @relation(fields: [vote_session_id], references: [id])
+  user            User         @relation(fields: [user_id], references: [id])
+  canditates      Candidates   @relation(fields: [candidate_id], references: [id])
+}
